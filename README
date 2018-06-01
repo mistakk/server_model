@@ -1,0 +1,150 @@
+makefile 文件是用来编译当前文件夹所有 .c 程序的
+
+client.c 是用来建立连接，然后send and receive and then quit
+
+server[%d].c 是各种服务器，下面简要介绍一下：
+
+
+# makefile
+makefile 文件是用来编译当前文件夹所有 .c 程序的
+
+---
+
+# client
+	client.c 是用于测试与server的连接
+	从建立连接到结束连接主要有四个步骤。
+		connect
+		{send, receive}
+		close
+
+---
+
+# server
+server[%d].c 是各种服务器模型框架，下面简要介绍一下：
+
+
+
+### 1. 循环服务器模型
+	description:	
+		一次只能服务一个客户端，在前面一个连接结束之后后者才能建立新的连接。
+		主要包括5个步骤。
+			listen
+			accept
+			{send, receive}
+			close
+	
+	advantage:
+		模型简单，适合单客户端
+	disadvantage:
+		不可以处理多客户端情况
+
+
+
+### 2. 统一accept, one request one process
+	description:	
+		主进程负责统一accept模块，在和每一个client建立连接后把数据处理交给另一个进程/线程处理。
+		这样可以服务更多的client，模型如下
+		主要包括5个步骤。
+			listen
+			accept
+			fork()
+			-main-	-child-
+					{send, receive}
+					close
+			accept
+			fork()
+			-main-	-child-
+					{send, receive} 
+					close
+			...
+			close
+	
+	advantage:
+		可以服务多个线程，灵活分配资源
+	disadvantage:
+		每次新建资源时间过长，上下文开销过大
+
+
+### 3. 统一accept, 预先分配线程池处理客户端
+	description:
+		首先主进程负责监听和接受请求。然后建立一个线程池，负责处理数据通信等业务模块。
+		主进程负责统一accept模块，在和每一个client建立连接后把数据处理交给另一个进程/线程处理。
+
+	主模块：
+		create_thread_pool()
+		listen
+		accept
+			alert thread
+		accept,
+			alert thread
+		...
+		close
+
+	子进程：
+		get connection,
+		{send, receive},
+		close
+		
+
+	advantage:
+		可处理多客户端；预先定义好资源，分配简单。
+	disadvantage:
+		子进程个数不好评估，太少的话基本上退化成循环网络模型；	太多的话上下文切换是不低的开销。
+		可以考虑动态调整的方式，根据系统当前负载和请求量调整子进程个数，Apache服务就是如此处理。
+
+
+### 4. 独立accept, 预先分配线程池处理全部流程
+	主进程建立监听窗口，然后创建线程池，每一个线程池独立负责所有的工作。
+
+	主模块：
+		create_thread_pool()
+		listen
+			{choose_thread(),}
+		close
+
+	子进程：
+		accept
+		{send, receive,}
+		close
+		
+
+	advantage:
+		同2.3类似，少了accept的主线程瓶颈。
+	disadvantage:
+		所有的子线程都在竞争一个accept资源，会造成“惊群”现象，不过linux内核已经处理过这种case。
+
+
+
+### 5. 独立accept, 预先分配线程池处理全部流程
+	此模式是在2.3的基础之上，将网络线程细分为处理连接和处理请求两类网络线程(TAF采用此框架)。
+
+	主模块：
+		create_accept_thread()
+		create_handle_thread()
+		create seats to flag which client has request
+		listen
+			each seat to check
+		close
+
+	accept 子进程：
+		accept,
+		choose one empty seat
+			flag the seat
+			set connected file
+		...
+		accept,
+		choose one empty seat
+			flag the seat
+			set connected file
+		
+	handle 子进程：
+		check all seats, for flaged seat
+			{send, receive,}
+			close connected file
+				
+	advantage:
+		当今很多网络框架基本是按照这种模式来处理的，网络进程1监听客户端连接请求，把已完成的网络套接字给其它的网络进程处理，
+		这些网络进程解析网络数据包，把数据放入消息队列(消息队列也可以起到过载保护的作用)中等待业务进程处理。
+		业务线程处理完之后回包给网络线程，再由网络线程回给客户端。
+		下面简单结合TAF服务端代码简析此模型：
+
