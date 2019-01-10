@@ -1,14 +1,16 @@
-makefile 文件是用来编译当前文件夹所有 .c 程序的
- 
-client.c 是用来建立连接，然后send and receive and then quit
-
-server[%d].c 是各种服务器，下面简要介绍一下：
-
-
-# makefile
-makefile 文件是用来编译当前文件夹所有 .c 程序的
+# 引言
+本人开发这个项目是为了学习cs架构的通信方式，同时学习一些并发/多线程模型，这个项目是学习的过程记录。
 
 ---
+
+# client-server 各文件描述
+- makefile 文件是用来编译当前文件夹的文件的
+- client 是用来客户端程序文件夹  
+- server 是服务端程序文件夹  
+- op 是相关操作的文件夹，用于启停脚本
+
+# op
+相关的client端 和 server 端的启停操作，以及一些监控脚本。
 
 # client
 	client.c 是用于测试与server的连接
@@ -17,12 +19,16 @@ makefile 文件是用来编译当前文件夹所有 .c 程序的
 		{send, receive}
 		close
 
----
+
 
 # server
-server[%d].c 是各种服务器模型框架，下面简要介绍一下：
+这里是server 端的文件，基本的为server_naive，后面需要做并发于是用了server_multi。
 
+## server_multi
+这里以后再写啦
 
+## server_naive
+在server_naive文件夹中，是一些简单的server模型，server[%d].c 是各种服务器，下面简要介绍一下：
 
 ### 1. 循环服务器模型
 	description:	
