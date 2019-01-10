@@ -9,28 +9,32 @@
 - server 是服务端程序文件夹  
 - op 是相关操作的文件夹，用于启停脚本
 
-# op
+# 1 op
 相关的client端 和 server 端的启停操作，以及一些监控脚本。
 
-# client
+# 2 client
+为了测试需要，client 分为单进程和多进程。其中单进程为client.c，多进程版本为client_multi，其中用到了线程池。
+## 2.1 client.c
+client.c 这是一个简单的模型，一次连接便断开
 	client.c 是用于测试与server的连接
 	从建立连接到结束连接主要有四个步骤。
 		connect
 		{send, receive}
 		close
+## 2.2 client_multi
+这里主要是开启了一个线程池，封装了一个任务类，可以灵活设置任务量的大小和并发度。
 
 
-
-# server
+# 3 server
 这里是server 端的文件，基本的为server_naive，后面需要做并发于是用了server_multi。
 
-## server_multi
-这里以后再写啦
+## 3.1 server_select
+这里是用select封装了一个并发度为1000的服务端，用到了IO复用等知识。
 
-## server_naive
+## 3.2 server_naive
 在server_naive文件夹中，是一些简单的server模型，server[%d].c 是各种服务器，下面简要介绍一下：
 
-### 1. 循环服务器模型
+### 3.2.1 循环服务器模型
 	description:	
 		一次只能服务一个客户端，在前面一个连接结束之后后者才能建立新的连接。
 		主要包括5个步骤。
@@ -46,7 +50,7 @@
 
 
 
-### 2. 统一accept, one request one process
+### 3.2.2 统一accept, one request one process
 	description:	
 		主进程负责统一accept模块，在和每一个client建立连接后把数据处理交给另一个进程/线程处理。
 		这样可以服务更多的client，模型如下
@@ -71,7 +75,7 @@
 		每次新建资源时间过长，上下文开销过大
 
 
-### 3. 统一accept, 预先分配线程池处理客户端
+### 3.2.3 统一accept, 预先分配线程池处理客户端
 	description:
 		首先主进程负责监听和接受请求。然后建立一个线程池，负责处理数据通信等业务模块。
 		主进程负责统一accept模块，在和每一个client建立连接后把数据处理交给另一个进程/线程处理。
@@ -99,7 +103,7 @@
 		可以考虑动态调整的方式，根据系统当前负载和请求量调整子进程个数，Apache服务就是如此处理。
 
 
-### 4. 独立accept, 预先分配线程池处理全部流程
+### 3.2.4 独立accept, 预先分配线程池处理全部流程
 	主进程建立监听窗口，然后创建线程池，每一个线程池独立负责所有的工作。
 
 	主模块：
@@ -121,7 +125,7 @@
 
 
 
-### 5. 独立accept, 预先分配线程池处理全部流程
+### 3.2.5 独立accept, 预先分配线程池处理全部流程
 	此模式是在2.3的基础之上，将网络线程细分为处理连接和处理请求两类网络线程(TAF采用此框架)。
 
 	主模块：
