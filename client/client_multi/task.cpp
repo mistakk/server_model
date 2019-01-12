@@ -35,11 +35,28 @@ bool clienttask::Run(){
         return false;
     }
     //printf("client->server mesg is: %s\n", str);
-    if((num=recv(sockfd,buf,MAXDATASIZE,0))==-1)
+    num=recv(sockfd,buf,MAXDATASIZE,0);
+    if(num == -1)
     {
         printf("recv() error\n");
-        return false;
-    }
+          if( errno == ECONNRESET )
+          {
+                printf("ECONNRESET\n");
+          }
+          else if( errno == EAGAIN ) 
+          {
+                printf("EAGAIN\n");
+          }
+          else if( errno == EWOULDBLOCK )
+          {
+              perror("recv not over...\n");
+          }
+          else
+          {
+                printf("else\n");
+          }
+    }     
+
     buf[num-1]='\0';
     //printf("server->client message: %s\n",buf);
     close(sockfd);

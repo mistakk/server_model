@@ -103,11 +103,17 @@ static void *handle_connect(void* argv){
             printf("[%s] [thread_connect] connection thread got signal to exit;\n", transtime(tv));
             break;
         }  
+        retselect = select(listenfd+1, &listenfds, NULL, NULL, &timeout);
+        if(retselect <=0){
+            sleep(1);
+            printf("retselect <=0 continue;\n");
+            continue;
+        }
+        connecttimes +=1;
         if((connectfd = accept(listenfd, (struct sockaddr *)&client, &len)) == -1){
             perror("accpet error.\n");
             exit(1);
         }
-        connecttimes +=1;
         server_times ++;
         //printf("[%s] [thread_connect] request, client ip %s, port %d, req_cnt %d\n", transtime(tv), inet_ntoa(client.sin_addr),htons(client.sin_port), server_times);
         bool success_connection = false;

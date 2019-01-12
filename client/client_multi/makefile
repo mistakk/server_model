@@ -1,5 +1,5 @@
 CC:= g++
-TARGET:= threadpool
+TARGET:= cs_client
 INCLUDE:= -I./
 LIBS:= -lpthread
 
