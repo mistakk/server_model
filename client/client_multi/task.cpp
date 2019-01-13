@@ -39,26 +39,27 @@ bool clienttask::Run(){
     if(num == -1)
     {
         printf("recv() error\n");
-          if( errno == ECONNRESET )
-          {
-                printf("ECONNRESET\n");
-          }
-          else if( errno == EAGAIN ) 
-          {
-                printf("EAGAIN\n");
-          }
-          else if( errno == EWOULDBLOCK )
-          {
-              perror("recv not over...\n");
-          }
-          else
-          {
-                printf("else\n");
-          }
+        if( errno == ECONNRESET )
+        {
+            printf("ECONNRESET\n");
+        }
+        else if( errno == EAGAIN ) 
+        {
+            printf("EAGAIN\n");
+        }
+        else if( errno == EWOULDBLOCK )
+        {
+            perror("recv not over...\n");
+        }
+        else
+        {
+            printf("else\n");
+        }
+        return false;
     }     
 
     buf[num-1]='\0';
-    //printf("server->client message: %s\n",buf);
     close(sockfd);
+    usleep(20*1000);
     return true;
 }

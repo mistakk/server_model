@@ -60,7 +60,7 @@ int main(int argc, char *argv[])
     }
     buf[num-1]='\0';;;
     printf("server message: %s\n",buf);
-    //sleep(3);
+    sleep(3);
     close(sockfd);
     return 0;
 }

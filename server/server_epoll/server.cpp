@@ -153,7 +153,7 @@ static void *handle_request(void *argv){
     printids("[thread_request] success start!");
     char buf[MAXRECVLEN];
     
-    int timeout = 1;
+    int timeout = 1000;
     fd_set readfds;
     int connectfd;
     int retval, iret;
@@ -178,6 +178,7 @@ static void *handle_request(void *argv){
         if(retval < 0)
             perror("error\n");
         else if (retval ==0){
+            printf("retval is 0;\n");
             int timegap_to_last_do = tv.tv_sec - tv_first.tv_sec;
             if(!waitting && timegap_to_last_do > 3){ 
                 int milliseconds = (tv.tv_sec - tv_first.tv_sec);
@@ -192,20 +193,22 @@ static void *handle_request(void *argv){
             waitting = false;
             gettimeofday(&tv_first, NULL);
         }
-        
+        //printf("ready to loop the retval is %d\n", retval); 
         for(int i = 0; i< retval; ++i){
             int rsock = revs[i].data.fd;
             if(revs[i].events & EPOLLIN){//can be read
                 iret = read(rsock, buf, MAXRECVLEN-1);
-                if(iret <0)             
+                if(iret <0){ 
                     perror("read data from client error;\n");
-                else if(iret ==0){
-                    printf("client:%d closed;\n", rsock);
+                }
+                else if(iret ==0){// server got client close cmd
+                    //printf("client:%d closed;\n", rsock);
                     epoll_ctl(epfd, EPOLL_CTL_DEL, rsock, NULL);
                     close(rsock);
+                    usleep(20*1000);
                 }
                 else{
-                    //printf("haha. i got you mesg;\n");
+                    //printf("server got client mesg;\n");
                     _ev.data.fd = rsock;
                     _ev.events = EPOLLOUT | revs[i].events;//add to readylist again
                     epoll_ctl(epfd, EPOLL_CTL_MOD, rsock, &_ev);
@@ -216,8 +219,11 @@ static void *handle_request(void *argv){
             else if(revs[i].events & EPOLLOUT){//in ready list, lets response something
                 speaktimes += 1;
                 sprintf(buf, "Hi~I got your message, it's my %d times send msg;", speaktimes);
-                    //printf("haha. i send you mesg;\n");
+                //printf("server send client mesg, %d;\n", speaktimes);
                 send(rsock, buf, strlen(buf), 0);
+                _ev.data.fd = rsock;
+                _ev.events = EPOLLIN|EPOLLET;
+                epoll_ctl(epfd, EPOLL_CTL_MOD, rsock, &_ev);
                 //close(rsock);//the server close, so client can't recv, RST是向CLOSE-WAIT/TIMED_WAIT发包收到的把
                 if(speaktimes %10000 ==0)
                     printf("[%s] [thread_request] [message] server->client len is %d, mesg is: %s\n", transtime(tv), strlen(buf), buf);

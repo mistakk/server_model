@@ -34,7 +34,7 @@ int main(int argc, char *argv[]){
         }
         if(th.m_jobfailed + th.m_jobsuccess == lastcnt)
             staytime ++;
-        if(staytime ==3)
+        if(staytime ==2)
             th.stopall();
         lastcnt = th.m_jobfailed + th.m_jobsuccess;
         sleep(2);

@@ -27,7 +27,7 @@ void* threadpool::threadfunc(void *idx){
     pthread_t tid = pthread_self();
     //pthread_detach(tid);
     while(1){
-        pthread_mutex_lock(&m_pthreadMutex);
+        pthread_mutex_lock(&m_pthreadMutex);//protect the m_tasklist
         while(m_tasklist.size()==0 && !stopflag){
             pthread_cond_wait(&m_pthreadCond, &m_pthreadMutex);
         }
@@ -46,7 +46,7 @@ void* threadpool::threadfunc(void *idx){
         }
         pthread_mutex_unlock(&m_pthreadMutex);
         bool result = task->Run();
-        pthread_mutex_lock(&m_countMutex);
+        pthread_mutex_lock(&m_countMutex);// protect the counter
         m_jobfailed += !result;
         m_jobsuccess += result;
         pthread_mutex_unlock(&m_countMutex);
