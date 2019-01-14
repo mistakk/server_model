@@ -12,10 +12,10 @@
 #include <signal.h>
 #include <sys/epoll.h> 
 #include <fcntl.h>
-
+#include <map>
 #include <iostream>
 #define PORT 2222
-#define BACKLOG 10
+#define BACKLOG 1000
 #define MAXRECVLEN 50
 using namespace std;
 void printids(const char *s);
@@ -27,6 +27,8 @@ bool shutflag = false;
 int epfd, maxnum;
 struct timeval tv, tv_first, tv_new;
 void handler(int a);
+std::map<int, int>mp;
+
 
 //设置socket连接为非阻塞模式  
 void setnonblocking(int sockfd) {  
@@ -135,8 +137,10 @@ static void *handle_connect(void* argv){
         }
         connecttimes +=1;
         //printf("[%s] [thread_connect] request, client ip %s, port %d, req_cnt %d\n", transtime(tv), inet_ntoa(client.sin_addr),htons(client.sin_port), server_times);
-        
+        mp[connectfd] = htons(client.sin_port);
+
         setnonblocking(connectfd);
+
         _ev.events = EPOLLIN | EPOLLET;
         _ev.data.fd = connectfd;
         if(epoll_ctl(epfd, EPOLL_CTL_ADD, connectfd, &_ev) == -1)
@@ -199,13 +203,14 @@ static void *handle_request(void *argv){
             if(revs[i].events & EPOLLIN){//can be read
                 iret = read(rsock, buf, MAXRECVLEN-1);
                 if(iret <0){ 
+                    printf("error port %d;\n", mp[rsock]);
                     perror("read data from client error;\n");
                 }
                 else if(iret ==0){// server got client close cmd
                     //printf("client:%d closed;\n", rsock);
                     epoll_ctl(epfd, EPOLL_CTL_DEL, rsock, NULL);
                     close(rsock);
-                    usleep(20*1000);
+                    //usleep(20*1000);
                 }
                 else{
                     //printf("server got client mesg;\n");
@@ -221,9 +226,11 @@ static void *handle_request(void *argv){
                 sprintf(buf, "Hi~I got your message, it's my %d times send msg;", speaktimes);
                 //printf("server send client mesg, %d;\n", speaktimes);
                 send(rsock, buf, strlen(buf), 0);
-                _ev.data.fd = rsock;
-                _ev.events = EPOLLIN|EPOLLET;
-                epoll_ctl(epfd, EPOLL_CTL_MOD, rsock, &_ev);
+                //_ev.data.fd = rsock;
+                //_ev.events = EPOLLIN|EPOLLET;
+                //epoll_ctl(epfd, EPOLL_CTL_MOD, rsock, &_ev);
+                close(rsock);
+                epoll_ctl(epfd, EPOLL_CTL_DEL, rsock, NULL);
                 //close(rsock);//the server close, so client can't recv, RST是向CLOSE-WAIT/TIMED_WAIT发包收到的把
                 if(speaktimes %10000 ==0)
                     printf("[%s] [thread_request] [message] server->client len is %d, mesg is: %s\n", transtime(tv), strlen(buf), buf);

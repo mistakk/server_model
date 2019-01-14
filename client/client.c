@@ -43,7 +43,7 @@ int main(int argc, char *argv[])
         printf("connect() error\n");
         exit(1);
     }
-    printf("connect success\n"); 
+    printf("connect success, server port is %d;\n", htons(server.sin_port)); 
     char str[] = "hello my babe!\n";
 
     if((num=send(sockfd,str,sizeof(str),0))==-1){

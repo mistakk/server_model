@@ -60,6 +60,6 @@ bool clienttask::Run(){
 
     buf[num-1]='\0';
     close(sockfd);
-    usleep(20*1000);
+    //usleep(20*1000);
     return true;
 }
