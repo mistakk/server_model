@@ -209,6 +209,7 @@ static void *handle_request(void *argv){
                 else if(iret ==0){// server got client close cmd
                     //printf("client:%d closed;\n", rsock);
                     epoll_ctl(epfd, EPOLL_CTL_DEL, rsock, NULL);
+                    sleep(10);
                     close(rsock);
                     //usleep(20*1000);
                 }
@@ -229,6 +230,7 @@ static void *handle_request(void *argv){
                 //_ev.data.fd = rsock;
                 //_ev.events = EPOLLIN|EPOLLET;
                 //epoll_ctl(epfd, EPOLL_CTL_MOD, rsock, &_ev);
+                sleep(10);
                 close(rsock);
                 epoll_ctl(epfd, EPOLL_CTL_DEL, rsock, NULL);
                 //close(rsock);//the server close, so client can't recv, RST是向CLOSE-WAIT/TIMED_WAIT发包收到的把

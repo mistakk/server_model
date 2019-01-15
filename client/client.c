@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
+#include <errno.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -60,7 +61,14 @@ int main(int argc, char *argv[])
     }
     buf[num-1]='\0';;;
     printf("server message: %s\n",buf);
-    sleep(3);
+    printf("errno is %d;\n", errno);
+    num = recv(0, buf, 100, 0);
+    if(errno !=0)
+        printf("errno is %d;\n", errno);
+    num = lseek(0, 0, 0);
+    if(errno !=0)
+        printf("errno is %d;\n", errno);
+    //sleep(30);
     close(sockfd);
     return 0;
 }
