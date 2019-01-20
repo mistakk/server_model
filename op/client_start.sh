@@ -4,7 +4,7 @@ cs_client_check()
     if [[ ${count} -ge "10" ]]; then
         echo "cs_client has "$count" thread"
         return
-    fi 
+    fi
     if [[ ${count} -ne "0" ]]; then
         pid=`ps -eLf | grep cs_client  | grep -v grep | awk '{print $2}'`
         echo "cs_client is running, pid: "$pid
