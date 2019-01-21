@@ -42,6 +42,7 @@ int main(int argc, char *argv[])
     if(connect(sockfd, (struct sockaddr *)&server, sizeof(server))==-1)
     {
         printf("connect() error\n");
+        printf("errno:%d", errno);
         exit(1);
     }
     printf("connect success, server port is %d;\n", htons(server.sin_port)); 
